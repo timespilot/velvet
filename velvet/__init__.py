@@ -1,0 +1,99 @@
+import os, typing
+
+
+type Rank = typing.Literal["2", "3", "4", "5", "6", "7", "8", "9", "10", "j", "q", "k", "a"]
+type Suit = typing.Literal["c", "d", "h", "s"]
+
+YES_VALUES: list[str] = ["y", "yes", "yeah", "v"]
+NO_VALUES: list[str] = ["n", "no", "nope", "x"]
+
+def notationToRank(rank_char: str) -> str | None:
+    if rank_char.isdigit() and 1 < int(rank_char) < 11:
+        return rank_char
+    return {
+        "j": "Jack",
+        "q": "Queen",
+        "k": "King",
+        "a": "Ace"
+    }.get(rank_char.lower())
+
+def notationToSuit(suit_char: str) -> str | None:
+    return {
+        "c": "Clubs",
+        "d": "Diamonds",
+        "h": "Hearts",
+        "s": "Spades"
+    }.get(suit_char.lower())
+
+class Joker:
+    def getString(self) -> str:
+        return "Joker"
+class GoldenKing:
+    def getString(self) -> str:
+        return "Golden King"
+class Card:
+    def __init__(self, rank: Rank, suit: Suit) -> None:
+        self.rank: Rank = rank
+        self.suit: Suit = suit
+    @classmethod
+    def fromNotation(cls, notation: str) -> "Card | Joker | GoldenKing | str":
+        rank: Rank | None = None
+        suit: Suit | None = None
+        notation = notation.lower().strip()
+        if not notation:
+            return "please enter a card."
+        if notation == "j":
+            return Joker()
+        if notation == "gk":
+            return GoldenKing()
+        if not notation.startswith("10") and notation[0] not in "23456789jqka":
+            return "invalid rank."
+        if not notation[1:]:
+            return f"{notation[0]} of..?"
+        if notation.startswith("10"):
+            rank = "10"
+            if not notation[2:]:
+                return f"10 of..?"
+            if notation[2] in "cdhs":
+                suit = notation[2] # type: ignore
+            else:
+                return "invalid rank."
+        if not rank:
+            if notation[0] in "23456789jqka":
+                rank = notation[0] # type: ignore
+            else:
+                return "invalid rank."
+        if not suit:
+            if notation[1] in "cdhs" and not suit:
+                suit = notation[1] # type: ignore
+            else:
+                return "invalid suit."
+        return cls(rank, suit) # type: ignore
+
+    def getString(self) -> str:
+        return f"{notationToRank(self.rank)} of {notationToSuit(self.suit)}"
+
+class VelvetLustre:
+    def __init__(self, *players: str) -> None:
+        self.players: dict[str, dict[str, typing.Any]] = {player: {} for player in players}
+    def openPrompt(self) -> None:
+        for player in self.players:
+            print(
+                f"{player}, please enter all 16 cards in your stack. examples:\n"
+                f"  2s for two of spades,\n"
+                f"  10h for ten of hearts,\n"
+                f"  kd for king of diamonds,\n"
+                f"  j for joker,\n"
+                f"  gk for golden king\n"
+            )
+            for i in range(1, 16):
+                while True:
+                    card: Card | Joker | GoldenKing | str = Card.fromNotation(input("> "))
+                    if isinstance(card, str):
+                        print(card)
+                    else:
+                        print(card.getString())
+
+        while True:
+            for player in self.players:
+                print(f"{player}'{'' if player.endswith('s') else 's'} turn")
