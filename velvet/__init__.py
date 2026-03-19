@@ -1,4 +1,4 @@
-import os, typing
+import os, typing, tkinter as tk
 
 
 type Rank = typing.Literal["2", "3", "4", "5", "6", "7", "8", "9", "10", "j", "q", "k", "a"]
@@ -75,24 +75,42 @@ class Card:
 
 class VelvetLustre:
     def __init__(self, *players: str) -> None:
-        self.players: dict[str, dict[str, typing.Any]] = {player: {} for player in players}
+        self.tk: tk.Tk = tk.Tk()
+        self.tk.withdraw()
+        self.players: dict[str, dict[str, typing.Any]] = {player: {
+            "stack": []
+        } for player in players}
     def openPrompt(self) -> None:
+        setup_tk: tk.Toplevel = tk.Toplevel()
+        setup_tk.title("velvet | setup")
+        setup_tk.geometry("1000x500")
         for player in self.players:
-            print(
-                f"{player}, please enter all 16 cards in your stack. examples:\n"
+            label: tk.Label = tk.Label(
+                setup_tk,
+                text=f"{player}, please enter all 16 cards in your stack. examples:\n"
                 f"  2s for two of spades,\n"
                 f"  10h for ten of hearts,\n"
                 f"  kd for king of diamonds,\n"
                 f"  j for joker,\n"
-                f"  gk for golden king\n"
+                f"  gk for golden king\n",
+                font=("arial", 20)
             )
-            for i in range(1, 16):
-                while True:
-                    card: Card | Joker | GoldenKing | str = Card.fromNotation(input("> "))
-                    if isinstance(card, str):
-                        print(card)
-                    else:
-                        print(card.getString())
+            label.pack()
+            entry: tk.Entry = tk.Entry(setup_tk, width=300)
+            card_num: int = 1
+            def submit() -> None:
+                card: Card | Joker | GoldenKing | str = Card.fromNotation(entry.get())
+                os.system("cls" if os.name == "nt" else "clear")
+                if isinstance(card, str):
+                    label.config(text=card)
+                else:
+                    self.players[player]["stack"].append(card)
+                    label.config(text=f"added {card.getString()}.")
+                    entry.delete(0, tk.END)
+            tk.Button(setup_tk, text="confirm")
+            while True:
+                if len(self.players[player]["stack"]) == 16:
+                    break
 
         while True:
             for player in self.players:
